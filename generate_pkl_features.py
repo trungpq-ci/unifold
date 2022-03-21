@@ -29,7 +29,7 @@ from functools import partial
 
 from unifold.data import pipeline
 from unifold.data import templates
-from unifold.inference.inference_pipeline import generate_pkl_features_from_fasta
+from unifold.inference.inference_pipeline import generate_pkl_features_from_fasta_debug
 
 #### USER CONFIGURATION ####
 
@@ -64,6 +64,8 @@ flags.DEFINE_string('mgnify_database_path', None,
                     'Path to the MGnify database for use by JackHMMER.')
 flags.DEFINE_string('bfd_database_path', None, 
                     'Path to the BFD database for use by HHblits.')
+flags.DEFINE_string('small_bfd_database_path', None, 
+                    'Path to the small BFD database for use by JackHMMER.')
 flags.DEFINE_string('uniclust30_database_path', None,
                     'Path to the Uniclust30 database for use by HHblits.')
 flags.DEFINE_string('pdb70_database_path', None,
@@ -110,7 +112,7 @@ def main(argv):
 
   # Path to the MGnify database for use by JackHMMER.
   mgnify_database_path = os.path.join(
-      FLAGS.data_dir, 'mgnify', 'mgy_clusters.fa') \
+      FLAGS.data_dir, 'mgnify', 'mgy_clusters_2018_12.fa') \
       if FLAGS.mgnify_database_path is None \
       else FLAGS.mgnify_database_path
 
@@ -120,10 +122,16 @@ def main(argv):
       'bfd_metaclust_clu_complete_id30_c90_final_seq.sorted_opt') \
       if FLAGS.bfd_database_path is None \
       else FLAGS.bfd_database_path
+  small_bfd_database_path = os.path.join(
+      FLAGS.data_dir, 'small_bfd', 'bfd-first_non_consensus_sequences.fasta') \
+      if FLAGS.small_bfd_database_path is None \
+      else FLAGS.small_bfd_database_path
 
   # Path to the Uniclust30 database for use by HHblits.
+  # /home/ubuntu/openfold/openfold-main/data/uniclust30/uniclust30_2018_08
+  #   FLAGS.data_dir, 'uniclust30', 'UniRef30_2020_06/UniRef30_2020_06') \
   uniclust30_database_path = os.path.join(
-      FLAGS.data_dir, 'uniclust30', 'UniRef30_2020_06/UniRef30_2020_06') \
+      FLAGS.data_dir, 'uniclust30', 'uniclust30_2018_08/uniclust30_2018_08') \
       if FLAGS.uniclust30_database_path is None \
       else FLAGS.uniclust30_database_path
 
@@ -170,12 +178,17 @@ def main(argv):
       mgnify_database_path=mgnify_database_path,
       bfd_database_path=bfd_database_path,
       uniclust30_database_path=uniclust30_database_path,
-      use_small_bfd=False,
-      small_bfd_database_path="",
+      use_small_bfd=True,
+      small_bfd_database_path=small_bfd_database_path,
       pdb70_database_path=pdb70_database_path,
       template_featurizer=template_featurizer)
 
   # Predict structure by pool.
+  t_0 = time.time()
+ # _ = generate_pkl_features_from_fasta_debug(fasta_paths[0], fasta_names[0],
+ #               output_dir=FLAGS.output_dir,
+ #               data_pipeline=data_pipeline)
+
   par = partial(generate_pkl_features_from_fasta,
                 output_dir=FLAGS.output_dir,
                 data_pipeline=data_pipeline)
@@ -183,6 +196,7 @@ def main(argv):
   pool.starmap(par, list(zip(fasta_paths, fasta_names)))
   pool.close()
   pool.join()
+  print("running time on {} fasta files is {} sec".format(len(fasta_paths), time.time()-t_0))
 
 
 if __name__ == '__main__':

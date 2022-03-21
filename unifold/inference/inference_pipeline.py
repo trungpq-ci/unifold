@@ -21,12 +21,55 @@ import numpy as np
 import pickle
 import time
 from typing import Dict, Optional
+from pathlib import Path
 
 from unifold.common import protein
 from unifold.data.pipeline import DataPipeline
 from unifold.model.features import FeatureDict
 from unifold.model.model import RunModel
 from unifold.relax.relax import AmberRelaxation
+
+
+def generate_pkl_features_from_fasta_debug(
+    fasta_path: str,
+    name: str,
+    output_dir: str,
+    data_pipeline: DataPipeline,
+    timings: Optional[Dict[str, float]] = None):
+
+  """Predicts structure using Uni-Fold for the given sequence."""
+  if timings is None:
+    timings = {}
+
+  # Check output dir.
+  output_dir = os.path.join(output_dir, name)
+  if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+  msa_output_dir = os.path.join(output_dir, 'msas')
+  if not os.path.exists(msa_output_dir):
+    os.makedirs(msa_output_dir)
+  hits_dir = Path("./hits").joinpath(name)
+
+  # Get features.
+  pt = time.time()
+  logging.info(f"processing file {fasta_path}...")
+  features = data_pipeline.process_from_hits(
+      input_fasta_path=fasta_path,
+      msa_output_dir=msa_output_dir)
+  timings['data_pipeline'] = time.time() - pt
+
+  # Write out features as a pickled dictionary.
+#  features_output_path = os.path.join(output_dir, 'features.pkl')
+#  with open(features_output_path, 'wb') as f:
+#    pickle.dump(features, f, protocol=4)
+#  logging.info(f"process file {fasta_path} done.")
+
+  # Save timings.
+  timings_output_path = os.path.join(output_dir, 'timings.json')
+  with open(timings_output_path, 'w') as fp:
+    json.dump(timings, fp, indent=4)
+
+  return features
 
 
 def generate_pkl_features_from_fasta(

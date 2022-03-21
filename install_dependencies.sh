@@ -24,6 +24,8 @@
 # install conda packages
 conda install -y -c conda-forge openmm=7.5.1 pdbfixer cudatoolkit=11.1
 conda install -y -c bioconda hmmer hhsuite==3.3.0 kalign2
+conda install -y -c conda-forge mpi4py mpi4jax
+
 
 # update openmm
 work_path=$(pwd)
@@ -46,8 +48,8 @@ cd ..
 
 # install conda and pip packages
 conda install -y -c nvidia cudnn==8.0.4
-pip install --upgrade pip \
-    && pip install -r ./requirements.txt \
-    && pip install jaxlib==0.1.67+cuda111 -f \
+python3 -m pip install --upgrade pip \
+    && python3 -m pip install -r ./requirements.txt \
+    && python3 -m pip install jaxlib==0.1.67+cuda111 -f \
     https://storage.googleapis.com/jax-releases/jax_releases.html
 
